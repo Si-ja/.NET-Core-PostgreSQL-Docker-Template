@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+
+    dockerapi:
+        image: dockerapi
+        depends_on:
+            - "db"
+        build:
+          context: .
+          dockerfile: ./Dockerfile
+        ports:
+          - 5000:5000
+        environment:
+          DB_CONNECTION_STRING: "Host=db;port=5432;;Username=root;Password=root;Database=root"
+
+    db:
+        # For setup: https://hub.docker.com/_/postgres
+        container_name: pg_container
+        image: postgres:13.3
+        restart: always
+        volumes:
+            - ./DBScripts/seed.sql :/docker-entrypoint-initdb.d/seed.sql
+        environment: 
+            POSTGRES_USER: root
+            POSTGRES_PASSWORD: root
+            POSTGRES_DB: root
+        ports:
+            - "5432:5432"
+
+    pgadmin:
+        # For setup: https://www.pgadmin.org/docs/pgadmin4/latest/container_deployment.html
+        container_name: pgadmin4_container
+        image: dpage/pgadmin4
+        restart: always
+        environment: 
+            # For the server host it will be: host.docker.internal
+            PGADMIN_DEFAULT_EMAIL: admin@admin.com
+            PGADMIN_DEFAULT_PASSWORD: admin
+            POSTGRES_DB: API
+        ports:
+            - "5050:80"
