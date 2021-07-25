@@ -1,63 +1,49 @@
 using System;
 using Npgsql;
 using System.IO;
+using dockerapi.ConnectionService;
+using Microsoft.Extensions.Configuration;
 
 namespace dockerapi.Scripts.DatabaseManipulations
 {
     public class Connector
     {
+        private IConfiguration _config;
         private readonly string _connectionString;
         private NpgsqlConnection con;
 
-        /// <summary>
-        /// Generate an object for the Connector class.
-        /// </summary>
-        public Connector()
+        public Connector(IConfiguration config)
         {
-            this._connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
-            this.con = new NpgsqlConnection(this._connectionString);
+            this._config = config;
+            this.con = ConnectionFactory.GeneratePostgresConnection(this._config);
+            // this._connectionString = "Host=localhost;port=5432;;Username=root;Password=root;Database=root"; //Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
+            // this.con = new NpgsqlConnection(this._connectionString);
         }
 
-        /// <summary>
-        /// In some cases connection to DB needs to be closed manually.
-        /// So do that by calling this method.
-        /// </summary>
-        public void closeConnection()
+        public void CloseConnection()
         {
             this.con.Close();
         }
 
-        /// <summary>
-        /// Sometimes you just have to open the closed connection.
-        /// </summary>
-        public void openConnection()
+        public void OpenConnection()
         {
             this.con.Open();
         }
 
-        /// <summary>
-        /// Read a sql statment for the file and return it to the user.
-        /// </summary>
-        /// <param name="path">Path to the file where it is located.</param>
-        /// <returns>A SQL statement in a form of a string.</returns>
-        public String readSqlStatement(String path)
+        public String ReadSqlStatement(String path)
         {
             String sql = File.ReadAllText(@path);
             return sql;
         }
 
-        /// <summary>
-        /// Check the version of the used Database.
-        /// </summary>
-        /// <returns>A String value indicating what version of PostgreSQL is being used.</returns>
-        public String checkDBVersion()
+        public String CheckDBVersion()
         {
             // Open a connection and send a version check query
-            this.openConnection();
+            this.OpenConnection();
             String sql = "SELECT version()";
             NpgsqlCommand cmd = new NpgsqlCommand(cmdText: sql, connection: this.con);
             String version = cmd.ExecuteScalar().ToString();
-            this.closeConnection();
+            this.CloseConnection();
 
             // Prepare the answer and return it to the user
             String answer = $"PostgreSQL version: {version}";
@@ -71,13 +57,13 @@ namespace dockerapi.Scripts.DatabaseManipulations
         /// </summary>
         /// <param name="path">Path to where the .sql file with the query is located.</param>
         /// <returns>A NpgsqlDataReader object with user's response</returns>
-        public NpgsqlDataReader sendSelectionQuery(String path)    
+        public NpgsqlDataReader SendSelectionQuery(String path)    
         {
             // Get information from the path
-            String sql = this.readSqlStatement(path: path);
+            String sql = this.ReadSqlStatement(path: path);
 
             // Open a connection and send the query of interest
-            this.openConnection();
+            this.OpenConnection();
             var cmd = new NpgsqlCommand(cmdText: sql, connection: con);
             NpgsqlDataReader rdr = cmd.ExecuteReader();
 
@@ -92,10 +78,10 @@ namespace dockerapi.Scripts.DatabaseManipulations
         /// <param name="bandname">The name of the band indicated by the user.</param>
         /// <param name="songname">The name of the song indicated by the user.</param>
         /// <param name="genretype">The type of a song, verified by us.</param>
-        public void sendMusicUpdate(String sql, String bandname, String songname, int genretype)
+        public void SendMusicUpdate(String sql, String bandname, String songname, int genretype)
         {
             // Open the connection and prepare our sql string with parameters that we will want to pass
-            this.openConnection();
+            this.OpenConnection();
             NpgsqlCommand cmd = new NpgsqlCommand(cmdText: sql, connection: this.con);
             cmd.Parameters.Add(parameterName: "@bandname", parameterType: NpgsqlTypes.NpgsqlDbType.Text);
             cmd.Parameters.Add(parameterName: "@songname", parameterType: NpgsqlTypes.NpgsqlDbType.Text);
@@ -111,7 +97,7 @@ namespace dockerapi.Scripts.DatabaseManipulations
             cmd.ExecuteNonQuery();
 
             // Close the connection
-            this.closeConnection();
+            this.CloseConnection();
         }
 
 

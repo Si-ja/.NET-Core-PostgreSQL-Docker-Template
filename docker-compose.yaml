@@ -2,18 +2,18 @@ version: '3.8'
 
 services:
 
-    dockerapi:
-        container_name: backend_container
-        image: dockerapi
-        depends_on:
-            - "db"
-        build:
-          context: .
-          dockerfile: ./Dockerfile
-        ports:
-          - 5000:5000
-        environment:
-          DB_CONNECTION_STRING: "Host=db;port=5432;;Username=root;Password=root;Database=root"
+    #dockerapi:
+    #    container_name: backend_container
+    #    image: dockerapi
+    #    depends_on:
+    #        - "db"
+    #    build:
+    #      context: .
+    #      dockerfile: ./Dockerfile
+    #    ports:
+    #      - 5000:5000
+    #    environment:
+    #      DB_CONNECTION_STRING: "Host=db;port=5432;;Username=root;Password=root;Database=root"
 
     db:
         # For setup: https://hub.docker.com/_/postgres
@@ -21,7 +21,7 @@ services:
         image: postgres:13.3
         restart: always
         volumes:
-            - ./DBScripts/seed.sql :/docker-entrypoint-initdb.d/seed.sql
+            - ./DBScripts/Postgres/seed.sql :/docker-entrypoint-initdb.d/seed.sql
         environment: 
             POSTGRES_USER: root
             POSTGRES_PASSWORD: root

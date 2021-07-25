@@ -46,3 +46,9 @@ To see and try all the methods available yourself and via an easy interface, use
 The links do only work on `http` side. You can use the api as is on port 5000, and swagger uses the same one but has a different extension.
 
 You will run into issues if you will want to run the backend service as a service with say `dotnet watch run`. This is because the connection is created using an environmental variable and other type of connections are not implemented in the code.
+
+## Roadmap for Current Fixes:
+- [] Add appsettings.json files for development and deployment environments
+- [] Configurate docker-compose for development and deployment enviornments
+- [] Fix the swagger interface and add ability to modify info on api routes
+- [] Implement Interfaces to make the current system more decoupled
