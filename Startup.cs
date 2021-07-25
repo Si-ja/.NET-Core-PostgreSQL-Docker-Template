@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using dockerapi.Scripts.InformationManipulation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -29,7 +30,7 @@ namespace dockerapi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
+            services.AddScoped<IGenresChecker, GenresChecker>();
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
@@ -54,11 +55,8 @@ namespace dockerapi
             }
 
             app.UseHttpsRedirection();
-
             app.UseRouting();
-
             app.UseAuthorization();
-
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();

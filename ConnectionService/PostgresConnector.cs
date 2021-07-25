@@ -1,9 +1,9 @@
 using dockerapi.Models;
+using dockerapi.Scripts.InformationManipulation;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.IO;
 
 namespace dockerapi.ConnectionService
@@ -13,17 +13,12 @@ namespace dockerapi.ConnectionService
         private IConfiguration _config;
         private NpgsqlConnection con;
         private string SQLStatmentsLocation;
-        private Hashtable TypeReferences = new Hashtable();
 
         public PostgresConnector(IConfiguration config)
         {
             this._config = config;
             this.con = ConnectionFactory.GeneratePostgresConnection(this._config);
             this.SQLStatmentsLocation = this._config.GetValue<string>("CurrentDB:QueriesLocation");
-
-            // Creating a types references for the future use of the system
-            this.TypeReferences.Add("int", NpgsqlTypes.NpgsqlDbType.Integer);
-            this.TypeReferences.Add("string", NpgsqlTypes.NpgsqlDbType.Text);
         }
 
         public void OpenConnection()
@@ -48,7 +43,7 @@ namespace dockerapi.ConnectionService
 
         public Music QuerySelectRandomSong(string SQLStatementFile)
         {
-            String sql = File.ReadAllText(@SQLStatementFile);
+            string sql = File.ReadAllText(@SQLStatementFile);
             this.OpenConnection();
             var cmd = new NpgsqlCommand(sql, this.con);
             NpgsqlDataReader rdr = cmd.ExecuteReader();
@@ -64,6 +59,30 @@ namespace dockerapi.ConnectionService
             return music;
         }
 
+        public int CheckMusicGenresQuery(IGenresChecker genresChecker, string SQLStatementFile, string genreType)
+        {
+            IGenresChecker _genresChecker = genresChecker;
+            string sql = File.ReadAllText(@SQLStatementFile);
+            this.OpenConnection();
+            var cmd = new NpgsqlCommand(sql, this.con);
+            NpgsqlDataReader rdr = cmd.ExecuteReader();
+
+            while (rdr.Read())
+            {
+                _genresChecker.AddItem(item: rdr.GetString(1));
+            }
+            this.CloseConnection();
+
+            int itemPosition = _genresChecker.CheckItemPosition(genreType);
+            if (itemPosition == -1)
+            {
+                String otherCategory = "Other";
+                itemPosition = _genresChecker.CheckItemPosition(item: otherCategory);
+            }
+
+            return itemPosition;
+        }
+
         public void QueryWithParametersInsert(string SQLStatementFile, string[] ExpectedParameters, Hashtable SQLParameters, Hashtable ParameterTypes)
         {
             if (SQLParameters.Count != ParameterTypes.Count)
@@ -72,18 +91,27 @@ namespace dockerapi.ConnectionService
             }
 
             this.OpenConnection();
-            String sql = File.ReadAllText(SQLStatementFile);
-            NpgsqlCommand cmd = new NpgsqlCommand(SQLStatementFile, this.con);
-            for (int i = 0; i < SQLParameters.Count - 1; i++)
+            string sql = File.ReadAllText(SQLStatementFile);
+            NpgsqlCommand cmd = new NpgsqlCommand(sql, this.con);
+            for (int i = 0; i < SQLParameters.Count; i++)
             {
                 string tempExpectedParameter = ExpectedParameters[i];
-                string tempParameter = (string)SQLParameters[tempExpectedParameter];
+                var tempParameter = SQLParameters[tempExpectedParameter];
                 string tempType = (string)ParameterTypes[tempExpectedParameter];
 
-                cmd.Parameters.Add($"@{tempExpectedParameter}", (NpgsqlTypes.NpgsqlDbType)this.TypeReferences[tempType]);
+                switch (tempType)
+                {
+                    case "int":
+                        cmd.Parameters.Add($"@{tempExpectedParameter}", NpgsqlTypes.NpgsqlDbType.Integer);
+                        break;
+
+                    case "string":
+                        cmd.Parameters.Add($"@{tempExpectedParameter}", NpgsqlTypes.NpgsqlDbType.Text);
+                        break;
+                }
                 cmd.Parameters[$"@{tempExpectedParameter}"].Value = tempParameter;
             }
-            cmd.Prepare();
+            // cmd.Prepare();
             cmd.ExecuteNonQuery();
             this.CloseConnection();
         }

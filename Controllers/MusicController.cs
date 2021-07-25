@@ -1,11 +1,10 @@
 using System;
 using Microsoft.AspNetCore.Mvc;
-using dockerapi.Scripts.DatabaseManipulations;
 using dockerapi.Scripts.InformationManipulation;
-using Npgsql;
 using dockerapi.Models;
 using Microsoft.Extensions.Configuration;
 using dockerapi.ConnectionService;
+using System.Collections;
 
 namespace dockerapi.Controllers
 {
@@ -22,10 +21,6 @@ namespace dockerapi.Controllers
             this.connector = DatabaseDetector.FindCorrectDatabaseConnector(this._config);
         }
 
-        /// <summary>
-        /// Get a random song from the Database and return to the user.
-        /// </summary>
-        /// <returns>A song with it's small description</returns>
         [HttpGet("random")]
         public Music GetRandomSong()
         {
@@ -35,49 +30,27 @@ namespace dockerapi.Controllers
 
         }
 
-        [HttpGet("insert/bandname={bandname}&songname={songname}&genretype={genretype}")]
-        public string PutSongIn(String bandname, String songname, String genretype)
+        [HttpPut("insert/bandname={bandname}&songname={songname}&genretype={genretype}")]
+        public void PutSongIn([FromServices] IGenresChecker genresChecker, String bandname, String songname, String genretype)
         {
-            return $"The song is: {songname} by {bandname}";
-
+            var _genresChecker = genresChecker;
             // First check the style we have to work with
             string sqlPath = $@"{this._config.GetValue<string>("CurrentDB:QueriesLocation")}CheckStyles.sql";
-            this.connector.OpenConnection();
+            int itemPosition = this.connector.CheckMusicGenresQuery(_genresChecker, sqlPath, genretype);
+            string[] expectedParameters = { "bandname", "songname", "genretype" };
 
-            /*
-            // Take the script that will check what kind of song types do we have with our database 
-            // And verify whether the user entered value is allowed 
-            String sqlPath = @"DBScripts/CheckStyles.sql";
-            NpgsqlDataReader rdr = this.connector.SendSelectionQuery(path: sqlPath);
+            Hashtable SQLParameters = new();
+            SQLParameters.Add("bandname", bandname);
+            SQLParameters.Add("songname", songname);
+            SQLParameters.Add("genretype", itemPosition);
 
-            // Create a collector that can store information on all genres we have present for us
-            // It's far from being efficient, but this is an example to get a point a cross...
-            // Do not do it this way in production though
-            Genres genres = new Genres(); 
-            while (rdr.Read())
-            {
-                genres.AddItem(item: rdr.GetString(1));
-            }
-            this.connector.CloseConnection();
+            Hashtable ParameterTypes = new();
+            ParameterTypes.Add("bandname", "string");
+            ParameterTypes.Add("songname", "string");
+            ParameterTypes.Add("genretype", "int");
 
-            // Now that we have all of our genres, we can check whether the user specified item is in it
-            int itemPosition = genres.CheckItemPosition(item: genretype);
-
-            // If it is equal to -1, then we will assign it to the "other" category
-            if (itemPosition == -1)
-            {
-                String otherCategory = "Other";
-                itemPosition = genres.CheckItemPosition(item: otherCategory);
-            }
-
-            // Now that we have our data - push it into the database
-            // Get a SQL file that can be read with parameters population principle
-            sqlPath = @"DBScripts/InsertSong.sql";
-            String sql = connector.ReadSqlStatement(path: sqlPath);
-                
-            // Update the parameters in it with ones the user has given in the request
-            this.connector.SendMusicUpdate(sql: sql, bandname: bandname, songname: songname, genretype: itemPosition);
-            */
+            sqlPath = $@"{this._config.GetValue<string>("CurrentDB:QueriesLocation")}InsertSong.sql";
+            this.connector.QueryWithParametersInsert(sqlPath, expectedParameters, SQLParameters, ParameterTypes);
         }
     }
 }

@@ -1,10 +1,7 @@
 using System;
 using Microsoft.AspNetCore.Mvc;
-using dockerapi.Scripts.DatabaseManipulations;
 using Microsoft.Extensions.Configuration;
 using dockerapi.ConnectionService;
-using System.Reflection;
-using Npgsql;
 
 namespace dockerapi.Controllers
 {

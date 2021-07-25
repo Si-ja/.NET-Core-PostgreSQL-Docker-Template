@@ -1,6 +1,4 @@
 using Microsoft.Extensions.Configuration;
-using System;
-using System.Reflection;
 
 namespace dockerapi.ConnectionService
 {
@@ -24,7 +22,6 @@ namespace dockerapi.ConnectionService
                     break;
             }
             return connector;
-            
         }
     }
 }
