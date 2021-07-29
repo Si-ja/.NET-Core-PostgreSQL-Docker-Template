@@ -13,7 +13,13 @@ services:
         ports:
           - 5000:5000
         environment:
-          DB_CONNECTION_STRING: "Host=db;port=5432;;Username=root;Password=root;Database=root"
+          # Will overwritte development settings in the projects
+          APPSETTINGS_HOST: "db"
+          APPSETTINGS_PORT: 5432
+          APPSETTINGS_USERNAME: "root"
+          APPSETTINGS_PASSWORD: "root"
+          APPSETTINGS_DATABASE: "root"
+
 
     db:
         # For setup: https://hub.docker.com/_/postgres
@@ -21,7 +27,7 @@ services:
         image: postgres:13.3
         restart: always
         volumes:
-            - ./DBScripts/seed.sql :/docker-entrypoint-initdb.d/seed.sql
+            - ./DBScripts/Postgres/seed.sql :/docker-entrypoint-initdb.d/seed.sql
         environment: 
             POSTGRES_USER: root
             POSTGRES_PASSWORD: root

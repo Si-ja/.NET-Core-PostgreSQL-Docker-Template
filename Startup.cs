@@ -1,4 +1,7 @@
 using System;
+using System.IO;
+using System.Reflection;
+using dockerapi.Scripts.InformationManipulation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -11,17 +14,23 @@ namespace dockerapi
 {
     public class Startup
     {
+        public IConfiguration Configuration { get; }
+
         public Startup(IConfiguration configuration)
         {
-            Configuration = configuration;
+            var builder = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile($"appsettings.json", optional: true, reloadOnChange: true)
+                .AddEnvironmentVariables();
+
+            Configuration = builder.Build();
         }
 
-        public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
+            services.AddScoped<IGenresChecker, GenresChecker>();
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
@@ -32,6 +41,10 @@ namespace dockerapi
                                 Version = "v1",
                                 Description = "ASP.NET Core Web API with Docker and PostgreSql"
                             });
+
+                string fileName = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                string filePath = Path.Combine(AppContext.BaseDirectory, fileName);
+                c.IncludeXmlComments(filePath);
             });
         }
 
@@ -42,15 +55,17 @@ namespace dockerapi
             {
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "dockerapi v1"));
+
+                app.UseSwaggerUI(c =>
+                {
+                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Dockerapi v1");
+                    c.RoutePrefix = "";
+                });
             }
 
             app.UseHttpsRedirection();
-
             app.UseRouting();
-
             app.UseAuthorization();
-
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();

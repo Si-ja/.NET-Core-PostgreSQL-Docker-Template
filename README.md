@@ -38,11 +38,18 @@ To see and try all the methods available yourself and via an easy interface, use
 0. Make sure you have Git and Docker installed on your computer and Docker is running
 1. Clone the repository via `git clone https://github.com/Si-ja/.NET-Core-PostgreSQL-Docker-Template.git`
 2. Navigate to the root of the repository
-3. Call `docker-compose.up`
-4. Have fun
+3. Call `docker-compose.up` on one of the perfered methods. Deployment will get all the services started. Development will only start the database and the application itself will have to be ran manually through say an IDE.
+4. For the Development version navigate to https://localhost:5000/. For the Deployment to http://localhost:5000/.
+5. Have fun
 
 ## Imoportant Notice:
 
 The links do only work on `http` side. You can use the api as is on port 5000, and swagger uses the same one but has a different extension.
 
 You will run into issues if you will want to run the backend service as a service with say `dotnet watch run`. This is because the connection is created using an environmental variable and other type of connections are not implemented in the code.
+
+## Roadmap for Current Fixes:
+- [X] Add appsettings.json files for development and deployment environments
+- [X] Configurate docker-compose for development and deployment enviornments
+- [X] Fix the swagger interface and add ability to modify info on api routes
+- [X] Implement Interfaces to make the current system more decoupled
