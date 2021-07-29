@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Reflection;
 using dockerapi.Scripts.InformationManipulation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -19,8 +20,7 @@ namespace dockerapi
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", optional: true, reloadOnChange: true)
+                .AddJsonFile($"appsettings.json", optional: true, reloadOnChange: true)
                 .AddEnvironmentVariables();
 
             Configuration = builder.Build();
@@ -41,6 +41,10 @@ namespace dockerapi
                                 Version = "v1",
                                 Description = "ASP.NET Core Web API with Docker and PostgreSql"
                             });
+
+                string fileName = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                string filePath = Path.Combine(AppContext.BaseDirectory, fileName);
+                c.IncludeXmlComments(filePath);
             });
         }
 
@@ -51,7 +55,12 @@ namespace dockerapi
             {
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "dockerapi v1"));
+
+                app.UseSwaggerUI(c =>
+                {
+                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Dockerapi v1");
+                    c.RoutePrefix = "";
+                });
             }
 
             app.UseHttpsRedirection();

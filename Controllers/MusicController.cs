@@ -21,6 +21,10 @@ namespace dockerapi.Controllers
             this.connector = DatabaseDetector.FindCorrectDatabaseConnector(this._config);
         }
 
+        /// <summary>
+        /// Check the Database and get 1 Random song from it.
+        /// </summary>
+        /// <returns>A Music model with 1 Random song.</returns>
         [HttpGet("random")]
         public Music GetRandomSong()
         {
@@ -30,6 +34,13 @@ namespace dockerapi.Controllers
 
         }
 
+        /// <summary>
+        /// Insert a new song into a Databse.
+        /// </summary>
+        /// <param name="genresChecker">Internal parameter. Added via dependency injection.</param>
+        /// <param name="bandname">Name of the music band to add.</param>
+        /// <param name="songname">Name of the song, associated with the aforementioned music band to add.</param>
+        /// <param name="genretype">Genre type in which an aforementioned song is performed.</param>
         [HttpPut("insert/bandname={bandname}&songname={songname}&genretype={genretype}")]
         public void PutSongIn([FromServices] IGenresChecker genresChecker, String bandname, String songname, String genretype)
         {
